@@ -1,4 +1,4 @@
-name: Deploy to EC2
+name: Deploy to EC2 Nginx
 on:
   push:
     branches: [ main ]
@@ -16,5 +16,20 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
           script: |
-            echo "Sample" > test.txt
-    
+            # 1. Define the deployment directory
+            APP_DIR="/var/www/html"
+            
+            # 2. Update code in a temporary or separate directory first
+            # (Assuming you already cloned the repo into ~/my-app)
+            cd ~/my-app || git clone https://github.com/${{ github.repository }} ~/my-app
+            cd ~/my-app
+            git pull origin main
+            
+            # 3. Copy files to Nginx web root (requires sudo)
+            sudo cp -r * $APP_DIR
+            
+            # 4. Set correct permissions for Nginx
+            sudo chown -R www-data:www-data $APP_DIR
+            
+            # 5. Reload Nginx to apply any config changes
+            sudo systemctl reload nginx
